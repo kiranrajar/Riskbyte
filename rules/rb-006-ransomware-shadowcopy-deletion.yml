@@ -7,3 +7,4 @@ match:
   process|in: [vssadmin.exe, wmic.exe, vssadmin]
   cmdline|contains: shadow
 action: {kind: isolate_host, target_field: host}
+

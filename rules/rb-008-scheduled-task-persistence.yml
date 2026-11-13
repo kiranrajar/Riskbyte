@@ -7,3 +7,4 @@ match:
   process|in: [schtasks.exe, schtasks]
   cmdline|contains: /create
 action: {kind: isolate_host, target_field: host}
+

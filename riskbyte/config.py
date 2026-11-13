@@ -72,13 +72,19 @@ def load() -> Config:
     provider = _env("RISKBYTE_LLM_PROVIDER", "ollama" if _env("RISKBYTE_LLM_URL") else "none").strip().lower()
     if provider not in ("none", "ollama", "openai", "gemini"):
         raise ConfigError("RISKBYTE_LLM_PROVIDER must be none, ollama, openai or gemini")
+
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    default_rules = os.path.join(repo_root, "rules") if os.path.isdir(os.path.join(repo_root, "rules")) else "./rules"
+    default_intel = os.path.join(repo_root, "intel", "indicators.txt") if os.path.isfile(os.path.join(repo_root, "intel", "indicators.txt")) else "./intel/indicators.txt"
+    default_data = "/tmp" if os.environ.get("VERCEL") else "./data"
+
     cfg = Config(
-        data_dir=_env("RISKBYTE_DATA_DIR", "./data"),
-        rules_dir=_env("RISKBYTE_RULES_DIR", "./rules"),
-        intel_file=_env("RISKBYTE_INTEL_FILE", "./intel/indicators.txt"),
+        data_dir=_env("RISKBYTE_DATA_DIR", default_data),
+        rules_dir=_env("RISKBYTE_RULES_DIR", default_rules),
+        intel_file=_env("RISKBYTE_INTEL_FILE", default_intel),
         bind=_env("RISKBYTE_BIND", "0.0.0.0"),
         port=int(_env("RISKBYTE_PORT", "8080")),
-        syslog_port=int(_env("RISKBYTE_SYSLOG_PORT", "5514")),
+        syslog_port=int(_env("RISKBYTE_SYSLOG_PORT", "0" if os.environ.get("VERCEL") else "5514")),
         admin_token=_env("RISKBYTE_ADMIN_TOKEN", "dev-admin" if dev else ""),
         analyst_token=_env("RISKBYTE_ANALYST_TOKEN", "dev-analyst" if dev else ""),
         ingest_token=_env("RISKBYTE_INGEST_TOKEN", "dev-ingest" if dev else ""),

@@ -7,3 +7,4 @@ match:
   process|in: [certutil.exe, certutil]
   cmdline|contains: urlcache
 action: {kind: isolate_host, target_field: host}
+

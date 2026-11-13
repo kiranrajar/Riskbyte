@@ -13,7 +13,7 @@ CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'se
 ID = r"(\d+)"
 
 
-def make_server(svc, bind: str, port: int) -> ThreadingHTTPServer:
+def get_request_handler(svc):
     cfg = svc.cfg
     tokens = [("admin", cfg.admin_token), ("analyst", cfg.analyst_token), ("ingest", cfg.ingest_token)]
 
@@ -61,7 +61,7 @@ def make_server(svc, bind: str, port: int) -> ThreadingHTTPServer:
         def _static(self, name):
             if name in ("", "index.html"):
                 name = "index.html"
-            if name not in ("index.html", "app.js", "app.css"):
+            if name not in ("index.html", "app.css", "app.js"):
                 return self._json(404, {"error": "not found"})
             with open(os.path.join(UI, name), "rb") as f:
                 self._send(200, f.read(), mimetypes.guess_type(name)[0] or "text/plain")
@@ -86,7 +86,9 @@ def make_server(svc, bind: str, port: int) -> ThreadingHTTPServer:
                 items = items if isinstance(items, list) else [items]
                 if len(items) > 1000:
                     raise ServiceError("max 1000 events per request", 413)
-                return self._json(202, {"accepted": svc.ingest(items, "api")})
+                accepted = svc.ingest(items, "api")
+                svc.process_pending()
+                return self._json(202, {"accepted": accepted})
             if not analyst:
                 return self._json(403, {"error": "forbidden"})
             if method == "GET":
@@ -126,4 +128,9 @@ def make_server(svc, bind: str, port: int) -> ThreadingHTTPServer:
         def do_POST(self):
             self._handle("POST")
 
+    return H
+
+
+def make_server(svc, bind: str, port: int) -> ThreadingHTTPServer:
+    H = get_request_handler(svc)
     return ThreadingHTTPServer((bind, port), H)
