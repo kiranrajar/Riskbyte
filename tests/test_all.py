@@ -242,7 +242,7 @@ class TestAPI(unittest.TestCase):
 
     def test_ui_served_and_bad_input(self):
         req = urllib.request.urlopen(self.base + "/")
-        self.assertIn(b"Riskbyte", req.read())
+        self.assertIn(b"RiskByte", req.read())
         self.assertEqual(self.call("/static/../config.py")[0], 404)
         self.assertEqual(self.call("/api/ingest", "dev-ingest", "POST", {"events": "x" * 1})[0], 202)
 
