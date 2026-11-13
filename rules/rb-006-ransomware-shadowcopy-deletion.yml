@@ -1,0 +1,9 @@
+id: rb-006
+title: Volume shadow copy deletion via vssadmin
+severity: critical
+description: Adversaries delete volume shadow copies to prevent recovery before deploying ransomware.
+tags: [impact, T1490, ransomware]
+match:
+  process|in: [vssadmin.exe, wmic.exe, vssadmin]
+  cmdline|contains: shadow
+action: {kind: isolate_host, target_field: host}

@@ -1,0 +1,9 @@
+id: rb-009
+title: Interactive reverse shell execution
+severity: high
+description: Spawning of an interactive shell from a web or scripting interpreter environment.
+tags: [execution, initial-access, T1059]
+match:
+  process|in: [bash, sh, nc, ncat, python, perl]
+  cmdline|re: (nc|ncat|bash|sh)\s+.*(-e|\/dev\/tcp)
+action: {kind: isolate_host, target_field: host}

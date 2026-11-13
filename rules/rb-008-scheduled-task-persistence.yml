@@ -1,0 +1,9 @@
+id: rb-008
+title: Suspicious scheduled task creation
+severity: medium
+description: Creation of persistent scheduled tasks via command line.
+tags: [persistence, execution, T1053]
+match:
+  process|in: [schtasks.exe, schtasks]
+  cmdline|contains: /create
+action: {kind: isolate_host, target_field: host}

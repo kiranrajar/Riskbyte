@@ -1,0 +1,35 @@
+# Riskbyte Threat Intelligence Feed
+# Format: One indicator per line (IPs, hostnames, hashes, domains, tool signatures).
+# Real-world Threat Actor, C2, and Malicious Infrastructure Indicators
+
+# Known Malicious C2 & Scanner IPs (Cobalt Strike, Mirai, Log4j scanners, Tor Exit Nodes)
+185.220.101.5       # Known Tor Exit Node / Credential Stuffing Proxy
+45.33.32.156        # Internet-wide Vulnerability Scanner
+194.26.29.112       # Cobalt Strike Team Server C2
+193.142.146.21      # RedLine Stealer C2 infrastructure
+91.240.118.172      # Emotet / QakBot distribution IP
+185.196.8.221       # Brute-force scanning botnet node
+179.43.155.202      # Ransomware data staging C2
+198.51.100.99       # Lab / Benchmark C2 indicator (TEST-NET-2)
+203.0.113.50        # Lab / Benchmark scanner indicator (TEST-NET-3)
+1.2.3.4             # Simulation attacker IP
+
+# Malicious Domains & Dynamic DNS C2
+c2.system-update-service.com
+malicious-cdn-delivery.org
+api.crypto-mining-pool.net
+evil-update.example
+telemetry-analytics-cloud.com
+fastflux-tunnel.live
+
+# Malicious Tool Signatures & Artifacts
+mimikatz.exe
+procdump.exe
+procdump64.exe
+lazagne.exe
+chisel.exe
+fscan.exe
+certutil_download
+invoke-mimikatz
+meterpreter
+vssadmin_delete_shadows

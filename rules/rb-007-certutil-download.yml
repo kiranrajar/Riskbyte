@@ -1,0 +1,9 @@
+id: rb-007
+title: Living off the land binary CertUtil download
+severity: high
+description: CertUtil abuse to download files from remote servers to bypass perimeter controls.
+tags: [defense-evasion, command-and-control, T1105, lolbin]
+match:
+  process|in: [certutil.exe, certutil]
+  cmdline|contains: urlcache
+action: {kind: isolate_host, target_field: host}

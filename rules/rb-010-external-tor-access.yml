@@ -1,0 +1,8 @@
+id: rb-010
+title: Inbound connection from known high-risk scanner or Tor node
+severity: high
+description: Direct authentication or access attempts originating from known anonymous proxies or scanner nodes.
+tags: [initial-access, credential-access, T1078]
+match:
+  src_ip|in: [185.220.101.5, 45.33.32.156, 185.196.8.221]
+action: {kind: block_ip, target_field: src_ip}

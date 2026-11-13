@@ -1,0 +1,32 @@
+# Secrets & Environment variables
+.env
+*.env
+.env.*
+!.env.example
+
+# Licensing & Keys
+license.rbl
+*.rbl
+keys/
+*.pem
+!vendor_public.pem
+
+# Databases & local state
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+
+# Logs
+*.log
+
+# OS artifacts
+.DS_Store
+Thumbs.db
