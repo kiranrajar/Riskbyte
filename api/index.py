@@ -19,5 +19,8 @@ cfg = config.load()
 svc = Service(cfg)
 svc.start()
 
-# Vercel looks for 'handler' as a BaseHTTPRequestHandler subclass
-handler = get_request_handler(svc)
+H = get_request_handler(svc)
+
+class handler(H):
+    """Top-level BaseHTTPRequestHandler for Vercel Python runtime."""
+    pass
