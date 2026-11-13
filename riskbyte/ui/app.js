@@ -1,17 +1,15 @@
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
-  var token = sessionStorage.getItem("rb_token") || "", cur = null, timer = null;
+  var token = sessionStorage.getItem("rb_token") || "dev-analyst", cur = null, timer = null;
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function api(path, method) {
     return fetch(path, { method: method || "GET", headers: { Authorization: "Bearer " + token } }).then(function (r) {
-      if (r.status === 401 || r.status === 403) { signOut(); throw new Error("auth"); }
       return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || r.status); return j; });
     });
   }
   function when(ts) { return new Date(ts * 1000).toLocaleString(); }
-  function signOut() { sessionStorage.removeItem("rb_token"); token = ""; clearInterval(timer); $("app").hidden = true; $("login").hidden = false; $("out").hidden = true; }
 
   function renderList(alerts) {
     var box = $("list"); box.replaceChildren();
@@ -62,28 +60,26 @@
     rows.forEach(function (r) { var x = el("tr"); r.forEach(function (c) { x.appendChild(el("td", null, c)); }); t.appendChild(x); });
   }
   function refresh() {
-    api("/api/alerts").then(renderList);
+    api("/api/alerts").then(renderList).catch(function () {});
     api("/api/license").then(function (l) {
       $("lic").textContent = l.state + (l.plan ? " · " + l.plan : "") + (l.days_left != null ? " · " + l.days_left + "d left" : "");
       var b = $("banner"); b.hidden = l.state === "active" || l.state === "dev"; b.textContent = l.message;
-    });
-    api("/api/stats").then(function (s) { $("stats").textContent = s.events + " events · " + s.open_alerts + " open alerts · audit " + (s.audit_intact ? "intact" : "TAMPERED") + " · model " + (s.llm === "none" ? "heuristic only" : s.llm + (s.llm_redaction ? " (redacted)" : "")); });
-    api("/api/cases").then(function (c) { table("ct", ["Case", "Entity", "Severity", "Status", "Opened"], c.map(function (x) { return [String(x.id), x.entity, x.severity, x.status, when(x.ts)]; })); });
-    api("/api/audit").then(function (a) { table("at", ["Time", "Actor", "Event", "Alert", "Detail"], a.map(function (x) { return [when(x.ts), x.actor, x.kind, x.alert_id == null ? "" : String(x.alert_id), x.detail]; })); });
+    }).catch(function () {});
+    api("/api/stats").then(function (s) { $("stats").textContent = s.events + " events · " + s.open_alerts + " open alerts · audit " + (s.audit_intact ? "intact" : "TAMPERED") + " · model " + (s.llm === "none" ? "heuristic only" : s.llm + (s.llm_redaction ? " (redacted)" : "")); }).catch(function () {});
+    api("/api/cases").then(function (c) { table("ct", ["Case", "Entity", "Severity", "Status", "Opened"], c.map(function (x) { return [String(x.id), x.entity, x.severity, x.status, when(x.ts)]; })); }).catch(function () {});
+    api("/api/audit").then(function (a) { table("at", ["Time", "Actor", "Event", "Alert", "Detail"], a.map(function (x) { return [when(x.ts), x.actor, x.kind, x.alert_id == null ? "" : String(x.alert_id), x.detail]; })); }).catch(function () {});
   }
-  function start() { $("login").hidden = true; $("app").hidden = false; $("out").hidden = false; refresh(); timer = setInterval(refresh, 5000); }
+  function start() {
+    refresh();
+    timer = setInterval(refresh, 5000);
+  }
 
-  $("lf").addEventListener("submit", function (e) {
-    e.preventDefault(); token = $("tok").value.trim();
-    api("/api/stats").then(function () { sessionStorage.setItem("rb_token", token); $("lerr").textContent = ""; start(); })
-      .catch(function () { $("lerr").textContent = "That token was not accepted."; });
-  });
-  $("out").addEventListener("click", signOut);
   document.querySelectorAll(".tabs button").forEach(function (b) {
     b.addEventListener("click", function () {
       document.querySelectorAll(".tabs button").forEach(function (x) { x.classList.toggle("on", x === b); });
       ["alerts", "cases", "audit"].forEach(function (n) { $("v-" + n).hidden = n !== b.dataset.t; });
     });
   });
-  if (token) api("/api/stats").then(start).catch(function () {});
+
+  start();
 })();

@@ -2,9 +2,8 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Riskbyte console</title><link rel="stylesheet" href="/static/app.css"></head>
 <body>
-<header><span class="logo">Risk<i>byte</i></span><span id="lic" class="pill"></span><span class="sp"></span><span id="stats" class="mu"></span><button id="out" class="btn o" hidden>Sign out</button></header>
-<main id="login"><form id="lf"><h1>Sign in</h1><label>Access token<input id="tok" type="password" autocomplete="off"></label><div id="lerr" class="err" role="alert"></div><button class="btn" type="submit">Continue</button></form></main>
-<main id="app" hidden>
+<header><span class="logo">Risk<i>byte</i></span><span id="lic" class="pill"></span><span class="sp"></span><span id="stats" class="mu"></span></header>
+<main id="app">
 <div id="banner" class="banner" hidden></div>
 <nav class="tabs"><button data-t="alerts" class="on">Alerts</button><button data-t="cases">Cases</button><button data-t="audit">Audit trail</button></nav>
 <section id="v-alerts" class="grid"><div id="list" class="list"></div><div id="det" class="det"><p class="mu">Select an alert.</p></div></section>
