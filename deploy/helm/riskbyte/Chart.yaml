@@ -1,0 +1,27 @@
+apiVersion: v2
+name: riskbyte
+description: RiskByte SOC Agent — Enterprise On-Premises SOC Automation Platform
+type: application
+version: 2.0.0
+appVersion: "2.0.0-ENTERPRISE"
+keywords:
+  - security
+  - soc-automation
+  - ai-analyst
+  - air-gapped
+  - incident-response
+home: https://riskbyte.internal
+sources:
+  - https://github.com/kiranrajar/Riskbyte
+maintainers:
+  - name: RiskByte Security Architecture Team
+    email: security@riskbyte.internal
+dependencies:
+  - name: postgresql
+    version: 15.5.24
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: 19.6.4
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled

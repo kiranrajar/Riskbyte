@@ -183,3 +183,4 @@ class LicenseValidator:
                 can_configure=False,
                 message=f"License validation failed: cryptographic signature invalid ({e})."
             )
+

@@ -118,3 +118,4 @@ class TheHiveConnector(BaseConnector):
             return True
         except Exception:
             return False
+

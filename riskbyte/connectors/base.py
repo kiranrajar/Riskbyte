@@ -121,3 +121,4 @@ class BaseConnector(abc.ABC):
     def act(self, action: str, target: str, params: Optional[Dict[str, Any]] = None) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
         """Optional active response action. Returns (success, message, rollback_metadata)."""
         return False, f"Action '{action}' is not supported by connector {self.name}", None
+

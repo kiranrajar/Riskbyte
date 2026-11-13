@@ -130,3 +130,4 @@ class PlaybookEngine:
             details={"approval_id": approval_id, "action": appr["action_type"]}
         )
         return True, f"Rollback executed successfully for action against {appr['target_entity']}."
+

@@ -99,3 +99,4 @@ class ZeekConnector(BaseConnector):
             except Exception:
                 pass
         return {"zeek_matches": len(matches), "recent_flows": matches[:5]}
+

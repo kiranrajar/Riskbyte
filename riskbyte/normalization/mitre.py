@@ -35,3 +35,4 @@ def extract_mitre_techniques(text: str) -> List[Dict[str, str]]:
             "tactic": meta["tactic"]
         })
     return results
+

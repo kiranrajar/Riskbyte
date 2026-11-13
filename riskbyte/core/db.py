@@ -287,3 +287,4 @@ class Database:
             prev_hash = r["record_hash"]
 
         return True, len(rows), f"Audit chain verified successfully ({len(rows)} records verified against RSA instance key)."
+

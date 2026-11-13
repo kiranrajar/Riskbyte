@@ -76,3 +76,4 @@ def normalize_event(raw: Dict[str, Any], source: str) -> Dict[str, Any]:
         "process": {"name": process, "cmdline": cmdline},
         "raw_payload": json.dumps(raw, default=str)
     }
+

@@ -86,3 +86,4 @@ class MISPConnector(BaseConnector):
         except Exception as exc:
             log.warning("MISP enrichment query failed for %s: %s", observable, exc)
             return {"is_known_threat": False, "error": str(exc)}
+

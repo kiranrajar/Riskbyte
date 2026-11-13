@@ -1,25 +1,212 @@
+# ==============================================================================
+# RiskByte SOC Agent — Enterprise On-Premises Docker Compose Deployment
+# Self-Hosted · Air-Gapped · Zero External Telemetry Egress
+# ==============================================================================
+version: "3.9"
+
 services:
-  riskbyte:
-    build: .
+  # ---- 1. RiskByte Enterprise Core API & Web Console ----
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: riskbyte/soc-agent:2.0.0-enterprise
+    container_name: riskbyte-app
     restart: unless-stopped
-    env_file: .env
-    ports:
-      - "8080:8080"        # console and API (put a TLS reverse proxy in front)
-      - "5514:5514/udp"    # syslog
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    environment:
+      - RISKBYTE_ENV=production
+      - RISKBYTE_BIND=0.0.0.0
+      - RISKBYTE_PORT=8080
+      - RISKBYTE_DATA_DIR=/data
+      - RISKBYTE_DATABASE_URL=postgresql://riskbyte:${POSTGRES_PASSWORD:-ChangeMePostgresSecret2026!}@postgres:5432/riskbyte
+      - RISKBYTE_REDIS_URL=redis://:${REDIS_PASSWORD:-ChangeMeRedisSecret2026!}@redis:6379/0
+      - RISKBYTE_OPENSEARCH_URL=http://opensearch:9200
+      - RISKBYTE_OLLAMA_URL=http://ollama:11434
+      - RISKBYTE_LLM_MODEL=${RISKBYTE_LLM_MODEL:-llama3.1:8b}
+      - RISKBYTE_AIR_GAPPED=true
+      - RISKBYTE_EGRESS_DENY=true
+      - RISKBYTE_LICENSE_PATH=/data/license.rbl
+      - RISKBYTE_LICENSE_PUBKEY=/data/vendor_public.pem
+      - RISKBYTE_ADMIN_PASSWORD=${RISKBYTE_ADMIN_PASSWORD:-EnterpriseAdmin2026!#}
     volumes:
       - riskbyte-data:/data
-      - ./license.rbl:/app/license.rbl:ro
-      - ./vendor_public.pem:/app/vendor_public.pem:ro
+      - ./rules:/app/rules:ro
+      - ./intel:/app/intel:ro
     read_only: true
-    tmpfs: [/tmp]
-    cap_drop: [ALL]
-    security_opt: ["no-new-privileges:true"]
-  ollama:                  # optional local model runtime: docker compose --profile local up -d
-    profiles: ["local"]
-    image: ollama/ollama:latest
+    tmpfs:
+      - /tmp:mode=1777,size=256M
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # ---- 2. Async Playbook & Ingestion Worker ----
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: riskbyte/soc-agent:2.0.0-enterprise
+    container_name: riskbyte-worker
     restart: unless-stopped
-    volumes: [ollama-models:/root/.ollama]
-    # After first start:  docker compose exec ollama ollama pull llama3.1:8b
+    command: ["python", "-m", "riskbyte.worker"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - RISKBYTE_ENV=production
+      - RISKBYTE_DATA_DIR=/data
+      - RISKBYTE_DATABASE_URL=postgresql://riskbyte:${POSTGRES_PASSWORD:-ChangeMePostgresSecret2026!}@postgres:5432/riskbyte
+      - RISKBYTE_REDIS_URL=redis://:${REDIS_PASSWORD:-ChangeMeRedisSecret2026!}@redis:6379/0
+      - RISKBYTE_OLLAMA_URL=http://ollama:11434
+      - RISKBYTE_AIR_GAPPED=true
+      - RISKBYTE_EGRESS_DENY=true
+    volumes:
+      - riskbyte-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777,size=256M
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal-net
+
+  # ---- 3. Relational Platform Database (PostgreSQL 16) ----
+  postgres:
+    image: postgres:16-alpine
+    container_name: riskbyte-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=riskbyte
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ChangeMePostgresSecret2026!}
+      - POSTGRES_DB=riskbyte
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U riskbyte -d riskbyte"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- 4. In-Memory Queue & Session Broker (Redis 7.2) ----
+  redis:
+    image: redis:7.2-alpine
+    container_name: riskbyte-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-ChangeMeRedisSecret2026!}", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-ChangeMeRedisSecret2026!}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- 5. Normalized Security Event Search (OpenSearch 2.14) ----
+  opensearch:
+    image: opensearchproject/opensearch:2.14.0
+    container_name: riskbyte-opensearch
+    restart: unless-stopped
+    environment:
+      - cluster.name=riskbyte-cluster
+      - node.name=riskbyte-node-01
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+      - DISABLE_SECURITY_PLUGIN=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks:
+      - internal-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cat/health || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  # ---- 6. Air-Gapped Local LLM Runtime (Ollama) ----
+  ollama:
+    image: ollama/ollama:latest
+    container_name: riskbyte-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - internal-net
+    # For NVIDIA GPU hardware acceleration, uncomment deploy stanza:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # ---- 7. Hardened TLS Ingress Proxy (Nginx) ----
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: riskbyte-proxy
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "80:80"
+      - "5514:5514/udp" # Syslog ingestion proxy
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - internal-net
+      - ingress-net
+
 volumes:
   riskbyte-data:
+  postgres-data:
+  redis-data:
+  opensearch-data:
   ollama-models:
+
+networks:
+  # Isolated internal network with no route to public internet (strict air-gap)
+  internal-net:
+    driver: bridge
+    internal: true
+  # Ingress network exposed only to customer management subnets
+  ingress-net:
+    driver: bridge

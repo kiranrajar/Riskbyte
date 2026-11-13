@@ -1,0 +1,142 @@
+# ==============================================================================
+# RiskByte SOC Agent — Helm Chart Default Configuration Values
+# Air-Gapped Production Deployment inside Customer Kubernetes Cluster
+# ==============================================================================
+
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+image:
+  repository: riskbyte/soc-agent
+  tag: "2.0.0-enterprise"
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+serviceAccount:
+  create: true
+  name: "riskbyte-sa"
+  annotations: {}
+
+securityContext:
+  runAsUser: 10001
+  runAsGroup: 10001
+  runAsNonRoot: true
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 8080
+  syslogPort: 5514
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "internal-ca-issuer"
+    nginx.ingress.kubernetes.io/proxy-body-size: "16m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: soc.riskbyte.internal
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: riskbyte-tls-cert
+      hosts:
+        - soc.riskbyte.internal
+
+networkPolicy:
+  enabled: true
+  # STRICT EGRESS DENY: Pods cannot connect to the public internet
+  denyExternalEgress: true
+  ingressFrom:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  egressTo:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: postgresql
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: redis
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ollama
+
+resources:
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+  limits:
+    cpu: 4000m
+    memory: 8Gi
+
+persistence:
+  enabled: true
+  storageClass: "enterprise-nvme"
+  accessMode: ReadWriteOnce
+  size: 100Gi
+
+# Platform Configuration
+config:
+  env: "production"
+  airGapped: true
+  egressDeny: true
+  llmModel: "llama3.1:8b"
+  databaseUrl: "postgresql://riskbyte:ChangeMePostgresSecret2026!@riskbyte-postgresql:5432/riskbyte"
+  redisUrl: "redis://:ChangeMeRedisSecret2026!@riskbyte-redis-master:6379/0"
+  ollamaUrl: "http://riskbyte-ollama:11434"
+  opensearchUrl: "http://wazuh-indexer:9200"
+
+# Self-Hosted Ollama LLM sub-deployment
+ollama:
+  enabled: true
+  image:
+    repository: ollama/ollama
+    tag: latest
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+      memory: 16Gi
+    requests:
+      memory: 8Gi
+  persistence:
+    size: 50Gi
+
+# Bitnami Postgres Sub-chart configuration
+postgresql:
+  enabled: true
+  auth:
+    username: riskbyte
+    database: riskbyte
+    password: "ChangeMePostgresSecret2026!"
+  primary:
+    persistence:
+      size: 50Gi
+
+# Bitnami Redis Sub-chart configuration
+redis:
+  enabled: true
+  auth:
+    password: "ChangeMeRedisSecret2026!"
+  master:
+    persistence:
+      size: 20Gi

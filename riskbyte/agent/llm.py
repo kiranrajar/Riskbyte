@@ -91,3 +91,4 @@ class SelfHostedLLMClient:
             raise RuntimeError(f"Self-hosted LLM returned HTTP {e.code}") from None
         except Exception as exc:
             raise RuntimeError(f"Self-hosted LLM unreachable at {self.endpoint_url}: {exc}") from None
+

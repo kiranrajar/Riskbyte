@@ -63,3 +63,4 @@ class CortexConnector(BaseConnector):
         except Exception as e:
             log.error("Cortex analyzer %s failed: %s", analyzer_id, e)
             return None
+

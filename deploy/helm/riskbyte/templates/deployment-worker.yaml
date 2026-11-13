@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "riskbyte.fullname" . }}-worker
+  labels:
+    {{- include "riskbyte.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      {{- include "riskbyte.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "riskbyte.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+    spec:
+      securityContext:
+        {{- toYaml .Values.securityContext | nindent 8 }}
+      containers:
+        - name: worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["python", "-m", "riskbyte.worker"]
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "riskbyte.fullname" . }}-config
+            - secretRef:
+                name: {{ include "riskbyte.fullname" . }}-secrets
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: platform-data
+              mountPath: /data
+            - name: tmp-dir
+              mountPath: /tmp
+      volumes:
+        - name: platform-data
+          persistentVolumeClaim:
+            claimName: {{ include "riskbyte.fullname" . }}-data-pvc
+        - name: tmp-dir
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi

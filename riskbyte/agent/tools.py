@@ -90,3 +90,4 @@ class ToolExecutor:
 
         else:
             raise ValueError(f"Unauthorized tool execution attempt: '{tool_name}' is not in the allowlist.")
+

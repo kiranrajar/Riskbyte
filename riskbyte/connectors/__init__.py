@@ -23,3 +23,4 @@ def create_connector(config: dict) -> BaseConnector:
     if ctype not in CONNECTOR_REGISTRY:
         raise ValueError(f"Unknown connector type '{ctype}'. Available: {list(CONNECTOR_REGISTRY.keys())}")
     return CONNECTOR_REGISTRY[ctype](config)
+

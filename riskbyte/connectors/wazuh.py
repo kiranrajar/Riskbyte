@@ -151,3 +151,4 @@ class WazuhConnector(BaseConnector):
             except Exception as e:
                 return False, f"Failed to execute Wazuh active-response: {e}", None
         return False, f"Action '{action}' unsupported by Wazuh connector", None
+

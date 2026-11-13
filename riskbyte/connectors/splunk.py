@@ -89,3 +89,4 @@ class SplunkConnector(BaseConnector):
                 return r.status == 200
         except Exception:
             return False
+

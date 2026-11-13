@@ -161,3 +161,4 @@ class AIAnalystService:
                 "reply": f"⚠️ **Inference Error**: {exc}. Please verify the self-hosted LLM container.",
                 "tools_used": tools_executed
             }
+

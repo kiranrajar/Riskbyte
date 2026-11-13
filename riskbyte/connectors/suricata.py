@@ -125,3 +125,4 @@ class SuricataConnector(BaseConnector):
             except Exception as e:
                 return False, f"Suricata active-response failed: {e}", None
         return False, f"Action '{action}' unsupported by Suricata", None
+

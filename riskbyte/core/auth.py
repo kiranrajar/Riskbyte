@@ -236,3 +236,4 @@ class SessionStore:
         for sid in to_del:
             del self._sessions[sid]
         return len(to_del)
+

@@ -1,0 +1,56 @@
+{{- if .Values.networkPolicy.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "riskbyte.fullname" . }}-egress-deny
+  labels:
+    {{- include "riskbyte.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "riskbyte.name" . }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow incoming traffic only from designated ingress controllers and internal monitoring
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: UDP
+          port: 5514
+  egress:
+    # Strictly allow egress ONLY to internal cluster dependencies (Postgres, Redis, Ollama, Wazuh)
+    # PUBLIC INTERNET EGRESS IS STRICTLY BLOCKED (0.0.0.0/0 denied)
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ollama
+      ports:
+        - protocol: TCP
+          port: 11434
+    - ports:
+        - protocol: UDP
+          port: 53 # Internal CoreDNS only
+        - protocol: TCP
+          port: 53
+{{- end }}
