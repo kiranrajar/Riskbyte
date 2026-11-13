@@ -246,6 +246,22 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(self.call("/static/../config.py")[0], 404)
         self.assertEqual(self.call("/api/ingest", "dev-ingest", "POST", {"events": "x" * 1})[0], 202)
 
+    def test_agent_chat_endpoint(self):
+        # 401 without auth
+        st, _, _ = self.call("/api/agent/chat", None, "POST", {"messages": [{"role": "user", "content": "hi"}]})
+        self.assertEqual(st, 401)
+        # 403 with ingest token
+        st, _, _ = self.call("/api/agent/chat", "dev-ingest", "POST", {"messages": [{"role": "user", "content": "hi"}]})
+        self.assertEqual(st, 403)
+        # 400 with empty messages
+        st, _, _ = self.call("/api/agent/chat", "dev-analyst", "POST", {"messages": []})
+        self.assertEqual(st, 400)
+        # 200 with analyst token (runs heuristic fallback if no LLM in test service)
+        st, res, _ = self.call("/api/agent/chat", "dev-analyst", "POST", {"messages": [{"role": "user", "content": "summarize incidents"}]})
+        self.assertEqual(st, 200)
+        self.assertIn("reply", res)
+        self.assertIn("tools_used", res)
+
 
 class MockCloud:
     """Local stand-in for the OpenAI and Gemini HTTP APIs. Records what it receives."""

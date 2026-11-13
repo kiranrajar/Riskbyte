@@ -3,92 +3,262 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RiskByte — Intelligence Operations Platform</title>
+<title>RiskByte — SOC Intelligence Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
 
-<header class="site-header">
-  <div class="header-brand">
-    <svg class="rb-monogram" width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="38" height="38" fill="#211C18"/>
-      <text x="19" y="26" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="17" font-weight="600" fill="#B69A70" letter-spacing="0.5">RB</text>
-    </svg>
-    <div class="brand-text">
-      <span class="wordmark">RISKBYTE</span>
-      <span class="tagline">Intelligence Operations Platform</span>
+<!-- ==================== SIDEBAR ==================== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-mark">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="6" fill="#B69A70"/>
+        <text x="14" y="20" text-anchor="middle" font-family="Georgia,serif" font-size="13" font-weight="700" fill="#101113" letter-spacing="0.5">RB</text>
+      </svg>
     </div>
-  </div>
-  <div class="header-meta">
-    <span id="lic" class="lic-pill"></span>
-    <div class="header-stats" id="stats"></div>
-  </div>
-</header>
-
-<main id="app">
-  <div id="banner" class="banner" hidden></div>
-
-  <!-- Metric Cards Row -->
-  <div class="metrics-row">
-    <div class="metric-card" id="mc-events">
-      <div class="metric-label">Total Events</div>
-      <div class="metric-value" id="m-events">—</div>
-      <div class="metric-sub">Ingested telemetry</div>
+    <div class="brand-name">
+      <span class="brand-title">RISKBYTE</span>
+      <span class="brand-sub">SOC Platform</span>
     </div>
-    <div class="metric-card" id="mc-alerts">
-      <div class="metric-label">Open Alerts</div>
-      <div class="metric-value" id="m-alerts">—</div>
-      <div class="metric-sub">Requiring action</div>
-    </div>
-    <div class="metric-card" id="mc-cases">
-      <div class="metric-label">Active Cases</div>
-      <div class="metric-value" id="m-cases">—</div>
-      <div class="metric-sub">Under investigation</div>
-    </div>
-    <div class="metric-card" id="mc-model">
-      <div class="metric-label">AI Engine</div>
-      <div class="metric-value metric-model" id="m-model">—</div>
-      <div class="metric-sub" id="m-audit">Audit chain</div>
-    </div>
+    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3L2 8l4 5M14 8H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
   </div>
 
-  <!-- Navigation Tabs -->
-  <nav class="tabs">
-    <button data-t="alerts" class="on">Alerts</button>
-    <button data-t="cases">Cases</button>
-    <button data-t="audit">Audit Trail</button>
+  <nav class="nav-group">
+    <div class="nav-label">Operations</div>
+    <button class="nav-item active" data-view="agent" title="AI Analyst">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 7.5C5.5 6.4 6.4 5.5 7.5 5.5h1C9.6 5.5 10.5 6.4 10.5 7.5c0 .8-.5 1.5-1.2 1.8L9 10H7l-.3-.7C6 9 5.5 8.3 5.5 7.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M7.5 11.5h1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>AI Analyst</span>
+      <span class="nav-badge" id="nb-agent" hidden></span>
+    </button>
+    <button class="nav-item" data-view="alerts" title="Alerts">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 4h4l-3.2 2.4 1.2 4L8 10l-3.5 2.4 1.2-4L2.5 6h4L8 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+      <span>Alerts</span>
+      <span class="nav-badge" id="nb-alerts"></span>
+    </button>
+    <button class="nav-item" data-view="cases" title="Cases">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1M6 8h4M6 10.5h2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span>Cases</span>
+      <span class="nav-badge" id="nb-cases"></span>
+    </button>
+    <button class="nav-item" data-view="audit" title="Audit Trail">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M3 8h7M3 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>Audit Trail</span>
+    </button>
   </nav>
 
-  <!-- Alerts View -->
-  <section id="v-alerts" class="grid">
-    <div id="list" class="list"></div>
-    <div id="det" class="det">
-      <div class="det-empty">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" stroke="#B69A70" stroke-width="1"/><path d="M16 10v7M16 20v2" stroke="#B69A70" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <p>Select an alert to begin analysis.</p>
+  <div class="sidebar-footer">
+    <div class="status-row">
+      <span class="status-dot" id="health-dot"></span>
+      <span class="status-text" id="health-text">Connecting…</span>
+    </div>
+    <div id="lic" class="lic-text"></div>
+  </div>
+</aside>
+
+<!-- ==================== MAIN ==================== -->
+<div class="main-wrap" id="mainWrap">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <button class="topbar-menu" id="menuBtn" title="Toggle sidebar">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 4.5h12M3 9h12M3 13.5h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+    <h1 class="topbar-title" id="topbarTitle">AI Analyst</h1>
+    <div class="topbar-meta">
+      <div class="metric-pill"><span class="mp-val" id="m-events">—</span><span class="mp-lab">Events</span></div>
+      <div class="metric-pill mp-warn"><span class="mp-val" id="m-alerts">—</span><span class="mp-lab">Alerts</span></div>
+      <div class="metric-pill"><span class="mp-val" id="m-cases">—</span><span class="mp-lab">Cases</span></div>
+    </div>
+  </header>
+
+  <!-- Banner -->
+  <div id="banner" class="banner" hidden></div>
+
+  <!-- ========== VIEW: AGENT ========== -->
+  <section class="view active" id="v-agent">
+    <div class="agent-layout">
+
+      <!-- Chat Column -->
+      <div class="chat-col" id="chatCol">
+        <div class="chat-header">
+          <div class="chat-header-info">
+            <div class="agent-avatar">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.5" stroke="#B69A70" stroke-width="1.3"/><path d="M7 9.5C7 8.1 8.1 7 9.5 7h1C11.9 7 13 8.1 13 9.5c0 1-.6 1.9-1.5 2.3L11 13H9l-.5-.8C7.6 11.4 7 10.5 7 9.5z" stroke="#B69A70" stroke-width="1.2" stroke-linejoin="round"/><path d="M9 14.5h2" stroke="#B69A70" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div class="agent-name">RiskByte AI</div>
+              <div class="agent-status-text" id="agentStatusText">Ready to investigate</div>
+            </div>
+          </div>
+          <div class="chat-header-actions">
+            <button class="icon-btn" id="newChatBtn" title="New conversation">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+          <!-- Welcome screen -->
+          <div class="chat-welcome" id="chatWelcome">
+            <div class="welcome-icon">
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="#B69A70" stroke-width="1.5"/><path d="M13 18.5C13 15.5 15.5 13 18.5 13h3C24.5 13 27 15.5 27 18.5c0 2-.9 3.8-2.4 4.9L24 26h-8l-.6-2.6C13.9 22.3 13 20.5 13 18.5z" stroke="#B69A70" stroke-width="1.5" stroke-linejoin="round"/><path d="M17 29h6" stroke="#B69A70" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <h2 class="welcome-title">RiskByte AI Analyst</h2>
+            <p class="welcome-sub">I'm your AI-powered SOC analyst. Ask me to investigate alerts, analyze threats, correlate events, or generate incident reports.</p>
+            <div class="suggestion-grid" id="suggestionGrid">
+              <button class="suggestion-btn" data-prompt="Investigate the latest critical security alert and provide a detailed forensic analysis.">
+                <span class="sug-icon">🔍</span>
+                <span>Investigate latest critical alert</span>
+              </button>
+              <button class="suggestion-btn" data-prompt="Summarize all open security incidents and identify the highest priority cases.">
+                <span class="sug-icon">📋</span>
+                <span>Summarize open incidents</span>
+              </button>
+              <button class="suggestion-btn" data-prompt="Analyze patterns across recent security events. Are there signs of a coordinated attack or lateral movement?">
+                <span class="sug-icon">📊</span>
+                <span>Analyze attack patterns</span>
+              </button>
+              <button class="suggestion-btn" data-prompt="Generate a threat intelligence report based on current platform data. What are the most significant risks?">
+                <span class="sug-icon">🛡️</span>
+                <span>Generate threat report</span>
+              </button>
+              <button class="suggestion-btn" data-prompt="Identify any signs of lateral movement, privilege escalation, or persistence mechanisms in recent alerts.">
+                <span class="sug-icon">🕸️</span>
+                <span>Detect lateral movement</span>
+              </button>
+              <button class="suggestion-btn" data-prompt="What remediation steps do you recommend for the current open alerts?">
+                <span class="sug-icon">🔧</span>
+                <span>Recommend remediation steps</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Composer -->
+        <div class="composer-wrap">
+          <div class="composer" id="composer">
+            <textarea
+              class="composer-input"
+              id="composerInput"
+              placeholder="Ask RiskByte AI to investigate, analyze, or summarize…"
+              rows="1"
+            ></textarea>
+            <div class="composer-actions">
+              <button class="composer-send" id="sendBtn" disabled title="Send">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 8L2 2l3 6-3 6 12-6z" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="composer-hint">RiskByte AI has access to live alert, case and audit data. Always verify critical findings.</div>
+        </div>
+      </div>
+
+      <!-- Context Panel -->
+      <div class="context-col" id="contextCol">
+        <div class="context-panel">
+          <div class="ctx-section">
+            <div class="ctx-title">Platform Status</div>
+            <div class="stat-grid">
+              <div class="stat-cell">
+                <div class="stat-val" id="cs-events">—</div>
+                <div class="stat-lab">Events</div>
+              </div>
+              <div class="stat-cell warn">
+                <div class="stat-val" id="cs-alerts">—</div>
+                <div class="stat-lab">Open Alerts</div>
+              </div>
+              <div class="stat-cell">
+                <div class="stat-val" id="cs-cases">—</div>
+                <div class="stat-lab">Cases</div>
+              </div>
+              <div class="stat-cell" id="cs-model-cell">
+                <div class="stat-val sm" id="cs-model">—</div>
+                <div class="stat-lab">AI Engine</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ctx-section">
+            <div class="ctx-title">Recent Alerts</div>
+            <div id="ctx-alert-list" class="ctx-list">
+              <div class="ctx-empty">No alerts yet</div>
+            </div>
+          </div>
+
+          <div class="ctx-section">
+            <div class="ctx-title">Investigation History</div>
+            <div id="ctx-history" class="ctx-list">
+              <div class="ctx-empty">No investigations this session</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========== VIEW: ALERTS ========== -->
+  <section class="view" id="v-alerts">
+    <div class="alert-layout">
+      <div class="alert-list-col">
+        <div class="list-header">
+          <span class="list-title">Alerts</span>
+          <div class="filter-row">
+            <button class="filter-btn active" data-status="">All</button>
+            <button class="filter-btn" data-status="triaged">Triaged</button>
+            <button class="filter-btn" data-status="new">New</button>
+            <button class="filter-btn" data-status="executed">Executed</button>
+          </div>
+        </div>
+        <div id="alertList" class="alert-list"></div>
+      </div>
+      <div class="alert-detail-col" id="alertDetailCol">
+        <div class="detail-empty">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16.5" stroke="#3a3f47" stroke-width="1.5"/><path d="M18 11v8M18 22v2" stroke="#3a3f47" stroke-width="2" stroke-linecap="round"/></svg>
+          <p>Select an alert to view details</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Cases View -->
-  <section id="v-cases" hidden>
-    <table id="ct"></table>
+  <!-- ========== VIEW: CASES ========== -->
+  <section class="view" id="v-cases">
+    <div class="table-view">
+      <div class="table-header">
+        <span class="table-title">Security Cases</span>
+      </div>
+      <div class="table-wrap">
+        <table id="caseTable">
+          <thead><tr><th>ID</th><th>Entity</th><th>Severity</th><th>Status</th><th>Opened</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
   </section>
 
-  <!-- Audit Trail View -->
-  <section id="v-audit" hidden>
-    <table id="at"></table>
+  <!-- ========== VIEW: AUDIT ========== -->
+  <section class="view" id="v-audit">
+    <div class="table-view">
+      <div class="table-header">
+        <span class="table-title">Audit Trail</span>
+        <span class="table-sub">Tamper-evident log of all platform actions</span>
+      </div>
+      <div class="table-wrap">
+        <table id="auditTable">
+          <thead><tr><th>Time</th><th>Actor</th><th>Event</th><th>Alert</th><th>Detail</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
   </section>
-</main>
 
-<footer class="site-footer">
-  <span>RiskByte Intelligence Operations Platform</span>
-  <span class="footer-sep">·</span>
-  <span>Confidential — Authorised Personnel Only</span>
-</footer>
+</div><!-- /main-wrap -->
 
 <script src="/static/app.js"></script>
 </body>

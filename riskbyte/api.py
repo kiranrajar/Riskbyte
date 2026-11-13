@@ -8,7 +8,8 @@ from .service import ServiceError
 log = logging.getLogger("riskbyte.api")
 UI = os.path.join(os.path.dirname(__file__), "ui")
 MAX_BODY = 1_000_000
-CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; "
+CSP = ("default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; "
+       "font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data:; "
        "base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 ID = r"(\d+)"
 
@@ -109,6 +110,20 @@ def get_request_handler(svc):
                     return self._json(200, svc.approve(int(m.group(1)), self._actor(role)))
                 if (m := re.fullmatch(f"/api/alerts/{ID}/dismiss", path)):
                     return self._json(200, svc.dismiss(int(m.group(1)), self._actor(role)))
+                if path == "/api/agent/chat":
+                    if not analyst:
+                        return self._json(403, {"error": "forbidden"})
+                    data = json.loads(self._body() or b"{}")
+                    messages = data.get("messages", [])
+                    if not isinstance(messages, list) or not messages:
+                        return self._json(400, {"error": "messages required"})
+                    if len(messages) > 50:
+                        return self._json(400, {"error": "max 50 messages"})
+                    for m in messages:
+                        if not isinstance(m.get("content"), str) or len(m["content"]) > 8000:
+                            return self._json(400, {"error": "invalid message"})
+                    result = svc.agent_chat(messages, self._actor(role))
+                    return self._json(200, result)
             return self._json(404, {"error": "not found"})
 
         def _handle(self, method):

@@ -60,9 +60,12 @@ class OllamaClient(_HttpLLM):
     def __init__(self, url: str, model: str, timeout: int = 60):
         self.url, self.model, self.timeout = url.rstrip("/"), model, timeout
 
-    def complete(self, system: str, prompt: str) -> str:
-        out = self._post(self.url + "/api/generate", {}, {"model": self.model, "system": system, "prompt": prompt,
-                         "stream": False, "format": "json", "options": {"temperature": 0}}, self.timeout)
+    def complete(self, system: str, prompt: str, json_format: bool = True) -> str:
+        body = {"model": self.model, "system": system, "prompt": prompt,
+                "stream": False, "options": {"temperature": 0}}
+        if json_format:
+            body["format"] = "json"
+        out = self._post(self.url + "/api/generate", {}, body, self.timeout)
         return out["response"]
 
 
@@ -72,11 +75,13 @@ class OpenAIClient(_HttpLLM):
     def __init__(self, url: str, model: str, api_key: str, timeout: int = 60):
         self.url, self.model, self.key, self.timeout = url.rstrip("/"), model, api_key, timeout
 
-    def complete(self, system: str, prompt: str) -> str:
+    def complete(self, system: str, prompt: str, json_format: bool = True) -> str:
+        body = {"model": self.model, "temperature": 0,
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]}
+        if json_format:
+            body["response_format"] = {"type": "json_object"}
         out = self._post(self.url + "/v1/chat/completions", {"Authorization": "Bearer " + self.key},
-                         {"model": self.model, "temperature": 0, "response_format": {"type": "json_object"},
-                          "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]},
-                         self.timeout)
+                         body, self.timeout)
         return out["choices"][0]["message"]["content"]
 
 
@@ -88,12 +93,13 @@ class GeminiClient(_HttpLLM):
         self.model = model.removeprefix("models/") if hasattr(model, "removeprefix") else (model[7:] if model.startswith("models/") else model)
         self.key, self.timeout = api_key, timeout
 
-    def complete(self, system: str, prompt: str) -> str:
+    def complete(self, system: str, prompt: str, json_format: bool = True) -> str:
         # Key goes in a header, not the query string, so it never appears in URLs or access logs.
+        gen_cfg = {"temperature": 0.2} if not json_format else {"temperature": 0, "responseMimeType": "application/json"}
         out = self._post(f"{self.url}/v1beta/models/{self.model}:generateContent", {"x-goog-api-key": self.key},
                          {"systemInstruction": {"parts": [{"text": system}]},
                           "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-                          "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}, self.timeout)
+                          "generationConfig": gen_cfg}, self.timeout)
         return out["candidates"][0]["content"]["parts"][0]["text"]
 
 
