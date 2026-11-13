@@ -3,10 +3,10 @@ from __future__ import annotations
 import hmac, json, logging, mimetypes, os, re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from .service import ServiceError
+from ..service import ServiceError
 
 log = logging.getLogger("riskbyte.api")
-UI = os.path.join(os.path.dirname(__file__), "ui")
+UI = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui")
 MAX_BODY = 1_000_000
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; "
        "font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data:; "
