@@ -10,10 +10,12 @@ from riskbyte import config
 from riskbyte.service import Service
 from riskbyte.api import get_request_handler
 
+import tempfile
+
 # Ensure Vercel serverless environment defaults
 os.environ.setdefault("RISKBYTE_DEV_MODE", "1")
-if "VERCEL" in os.environ:
-    os.environ.setdefault("RISKBYTE_DATA_DIR", "/tmp")
+if "VERCEL" in os.environ or not os.environ.get("RISKBYTE_DATA_DIR"):
+    os.environ.setdefault("RISKBYTE_DATA_DIR", "/tmp" if os.name != "nt" else tempfile.gettempdir())
 
 cfg = config.load()
 svc = Service(cfg)
